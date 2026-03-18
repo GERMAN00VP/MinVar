@@ -16,11 +16,19 @@ def load_gff_regions(gff_path):
 
     with open(gff_path) as f:
         for line in f:
-            if line.startswith("#"):
+            line = line.strip()
+            if not line or line.startswith("#"):
                 continue
-            parts = line.strip().split("\t")
-            start = int(parts[3])
-            end = int(parts[4])
+            parts = line.split("\t")
+            if len(parts) < 5:
+                # ignorar líneas malformadas
+                continue
+            try:
+                start = int(parts[3])
+                end = int(parts[4])
+            except ValueError:
+                continue  # saltar si start/end no son números
+
             regions.update(range(start, end + 1))
 
     return regions
@@ -30,22 +38,26 @@ def parse_gff(gff_path):
     """
     Parse GFF and return list of features
     """
-
     features = []
 
     with open(gff_path) as f:
         for line in f:
-            if line.startswith("#"):
+            line = line.strip()
+            if not line or line.startswith("#"):
                 continue
-
-            parts = line.strip().split("\t")
+            parts = line.split("\t")
+            if len(parts) < 9:
+                continue  # saltar líneas que no tengan 9 columnas
 
             chrom = parts[0]
             feature_type = parts[2]
-            start = int(parts[3])
-            end = int(parts[4])
-            attributes = parts[8]
+            try:
+                start = int(parts[3])
+                end = int(parts[4])
+            except ValueError:
+                continue
 
+            attributes = parts[8]
             attr_dict = {}
             for attr in attributes.split(";"):
                 if "=" in attr:
@@ -62,6 +74,7 @@ def parse_gff(gff_path):
             })
 
     return features
+
 
 def annotate_position(pos, features):
     """

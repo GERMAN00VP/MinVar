@@ -66,7 +66,8 @@ MinVar_results/
 | Alt_freq | Allele frequency |
 | Alt_extreme_fraction | Fraction of reads in read extremes |
 | Consensus_extreme_fraction | Same for consensus |
-| Strand_bias | Strand imbalance |
+| Alt_strand_bias | Strand imbalance |
+| Consensus_strand_bias | Same for consensus |
 | Mean_base_quality | Average Phred quality |
 | Status | PASS / FAIL |
 

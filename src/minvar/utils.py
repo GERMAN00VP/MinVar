@@ -109,50 +109,59 @@ def annotate_position(pos, features):
 
 
 
-def analyze_variant_position(bam, pos, allele):
-    pos0 = pos - 1
+def analyze_position_all_alleles(bam, positions):
+    """
+    Optimized single-pass pileup for all alleles in target positions.
+    Returns dict of dicts: {pos: {allele: metrics}}
+    """
+    min_pos = min(positions)
+    max_pos = max(positions)
+    target_positions = set(positions)
+    pileup_cache = {}
 
-    total = 0
-    extreme = 0
-    forward = 0
-    reverse = 0
-    qualities = []
+    for pileupcolumn in bam.pileup(start=min_pos-1, stop=max_pos, truncate=True):
+        pos = pileupcolumn.reference_pos + 1  # 1-based
+        if pos not in target_positions:
+            continue
 
-    for pileupcolumn in bam.pileup(start=pos0, stop=pos0+1, truncate=True):
-
+        metrics = {}
         for pileupread in pileupcolumn.pileups:
-
             if pileupread.is_del or pileupread.is_refskip:
                 continue
-
             read = pileupread.alignment
             read_pos = pileupread.query_position
-
             base = read.query_sequence[read_pos]
 
-            if base != allele:
-                continue
+            if base not in metrics:
+                metrics[base] = {
+                    "total": 0,
+                    "extreme": 0,
+                    "forward": 0,
+                    "reverse": 0,
+                    "qualities": []
+                }
 
-            total += 1
-
+            m = metrics[base]
+            m["total"] += 1
             rel_pos = read_pos / read.query_length
-
             if rel_pos < 0.1 or rel_pos > 0.9:
-                extreme += 1
-
+                m["extreme"] += 1
             if read.is_reverse:
-                reverse += 1
+                m["reverse"] += 1
             else:
-                forward += 1
+                m["forward"] += 1
+            m["qualities"].append(read.query_qualities[read_pos])
 
-            qualities.append(read.query_qualities[read_pos])
+        # store metrics for this position
+        pileup_cache[pos] = {
+            base: {
+                "depth": m["total"],
+                "extreme_fraction": m["extreme"] / m["total"],
+                "strand_bias": abs(m["forward"] - m["reverse"]) / m["total"],
+                "mean_base_quality": sum(m["qualities"]) / len(m["qualities"])
+            }
+            for base, m in metrics.items() if m["total"] > 0
+        }
 
-    if total == 0:
-        return None
+    return pileup_cache
 
-    return {
-        "depth": total,
-        "extreme_fraction": extreme / total,
-        "strand_bias": abs(forward - reverse) / total,
-        "mean_base_quality": sum(qualities) / len(qualities)
-    }

@@ -1,0 +1,35 @@
+# --- Python & Build ---
+__pycache__/
+*.py[cod]
+*$py.class
+dist/
+build/
+*.egg-info/
+.installed.cfg
+.eggs/
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+.env/
+
+# --- Bioinformatics & Data ---
+# Ignora archivos de datos pesados (BAM, FASTQ, etc.) 
+# que suelen estar en las carpetas de entrada de IRMA
+*.bam
+*.bai
+*.fastq
+*.fq
+*.gz
+*.fasta
+*.fa
+
+# --- Project Specific ---
+PAPER/
+
+# --- System & IDE ---
+.DS_Store
+.vscode/
+.idea/
+*.swp

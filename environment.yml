@@ -1,0 +1,8 @@
+name: minvar
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pysam
+  - pandas
